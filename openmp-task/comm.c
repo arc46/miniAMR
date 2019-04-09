@@ -50,9 +50,6 @@ void comm(int start, int num_comm, int stage)
    block *bp;
    MPI_Status status;
 
-#pragma omp parallel
-#pragma omp single
-{
    for (o = 0; o < 3; o++) {
       if (permute)
          dir = permutations[stage%6][o];
@@ -181,7 +178,6 @@ void comm(int start, int num_comm, int stage)
       timer_comm_wait[dir] += t3 - t2;
       timer_comm_dir[dir] += timer() - t1;
    }
-} // pragma single
 }
 
 //FIXME: refactoring pending for MPI part
@@ -1545,14 +1541,16 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                                         barray1[start*block3D_size:num_comm*block3D_size]) \
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int j = 1; j <= y_block_size; j++)
-               for (int k = 1; k <= z_block_size; k++) {
-                  array1[x_block_size+1][j][k] = array[1][j][k];
-                  array[0][j][k] = array1[x_block_size][j][k];
-               }
+         {
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int j = 1; j <= y_block_size; j++)
+                  for (int k = 1; k <= z_block_size; k++) {
+                     array1[x_block_size+1][j][k] = array[1][j][k];
+                     array[0][j][k] = array1[x_block_size][j][k];
+                  }
+            }
          }
       } else if ((l/2) == 1) {  /* South, North */
          if ((l%2) == 0) {      /* South */
@@ -1575,14 +1573,16 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                                         barray1[start*block3D_size:num_comm*block3D_size]) \
                           firstprivate(start, num_comm, barray, barray1, \
                                        is, ie, y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int i = is; i <= ie; i++)
-               for (int k = 1; k <= z_block_size; k++) {
-                  array1[i][y_block_size+1][k] = array[i][1][k];
-                  array[i][0][k] = array1[i][y_block_size][k];
-               }
+         {
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int i = is; i <= ie; i++)
+                  for (int k = 1; k <= z_block_size; k++) {
+                     array1[i][y_block_size+1][k] = array[i][1][k];
+                     array[i][0][k] = array1[i][y_block_size][k];
+                  }
+            }
          }
       } else if ((l/2) == 2) {  /* Down, Up */
          if ((l%2) == 0) {      /* Down */
@@ -1609,14 +1609,16 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                                         barray1[start*block3D_size:num_comm*block3D_size]) \
                           firstprivate(start, num_comm, barray, barray1, \
                                        is, ie, js, je, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int i = is; i <= ie; i++)
-               for (int j = js; j <= je; j++) {
-                  array1[i][j][z_block_size+1] = array[i][j][1];
-                  array[i][j][0] = array1[i][j][z_block_size];
-               }
+         {
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int i = is; i <= ie; i++)
+                  for (int j = js; j <= je; j++) {
+                     array1[i][j][z_block_size+1] = array[i][j][1];
+                     array[i][j][0] = array1[i][j][z_block_size];
+                  }
+            }
          }
       }
    } else {  /* set all ghosts */
@@ -1634,14 +1636,16 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                                         barray1[start*block3D_size:num_comm*block3D_size]) \
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int j = 0; j <= y_block_size+1; j++)
-               for (int k = 0; k <= z_block_size+1; k++) {
-                  array1[x_block_size+1][j][k] = array[1][j][k];
-                  array[0][j][k] = array1[x_block_size][j][k];
-               }
+         {
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int j = 0; j <= y_block_size+1; j++)
+                  for (int k = 0; k <= z_block_size+1; k++) {
+                     array1[x_block_size+1][j][k] = array[1][j][k];
+                     array[0][j][k] = array1[x_block_size][j][k];
+                  }
+            }
          }
       } else if ((l/2) == 1) {  /* South, North */
          if ((l%2) == 0) {      /* South */
@@ -1657,14 +1661,16 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                                         barray1[start*block3D_size:num_comm*block3D_size]) \
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int i = 0; i <= x_block_size+1; i++)
-               for (int k = 0; k <= z_block_size+1; k++) {
-                  array1[i][y_block_size+1][k] = array[i][1][k];
-                  array[i][0][k] = array1[i][y_block_size][k];
-               }
+         {
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int i = 0; i <= x_block_size+1; i++)
+                  for (int k = 0; k <= z_block_size+1; k++) {
+                     array1[i][y_block_size+1][k] = array[i][1][k];
+                     array[i][0][k] = array1[i][y_block_size][k];
+                  }
+            }
          }
       } else if ((l/2) == 2) {  /* Down, Up */
          if ((l%2) == 0) {      /* Down */
@@ -1680,14 +1686,16 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                                         barray1[start*block3D_size:num_comm*block3D_size]) \
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int i = 0; i <= x_block_size+1; i++)
-               for (int j = 0; j <= y_block_size+1; j++) {
-                  array1[i][j][z_block_size+1] = array[i][j][1];
-                  array[i][j][0] = array1[i][j][z_block_size];
-               }
+         {
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int i = 0; i <= x_block_size+1; i++)
+                  for (int j = 0; j <= y_block_size+1; j++) {
+                     array1[i][j][z_block_size+1] = array[i][j][1];
+                     array[i][j][0] = array1[i][j][z_block_size];
+                  }
+            }
          }
       }
    }

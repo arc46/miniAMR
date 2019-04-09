@@ -114,7 +114,7 @@ void redistribute_blocks(double *, double *, double *, double *, int *, int);
 
 // stencil.c
 //void stencil_driver(block *, int, int);
-void stencil_driver(int, int);
+void stencil_driver(int, int, int, int);
 
 // util.c
 double timer(void);

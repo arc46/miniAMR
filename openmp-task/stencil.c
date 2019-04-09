@@ -35,7 +35,7 @@
 #include "block.h"
 #include "comm.h"
 #include "proto.h"
-void stencil_calc(int, int);
+void stencil_calc(int, int, int, int);
 void stencil_0(int);
 void stencil_x(int);
 void stencil_y(int);
@@ -46,12 +46,12 @@ void stencil_check(int);
 int num_cells;
 
 // This routine does the stencil calculations.
-void stencil_driver(int var, int cacl_stage)
+void stencil_driver(int stage, int var, int number, int cacl_stage)
 {
    num_cells = x_block_size*y_block_size*z_block_size;
 
    if (stencil)
-      stencil_calc(var, stencil);
+      stencil_calc(stage, var, number, stencil);
    else {
       assert(!"Supporting stencil=7 for now");
       //FIXME: extend refactoring to other stencils
@@ -84,78 +84,87 @@ void stencil_driver(int var, int cacl_stage)
    }
 }
 
-void stencil_calc(int var, int stencil_in)
+void stencil_calc(int stage, int var, int number, int stencil_in)
 {
-   int i, j, k, in;
+   int in;
    double sb, sm, sf;
    block *bp;
 
    typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
 
    if (stencil_in == 7) {
-#pragma omp parallel for default(shared) private(i, j, k, bp)
+//#pragma omp parallel for default(shared) private(i, j, k, bp)
       for (in = 0; in < sorted_index[num_refine+1]; in++) {
          bp = &blocks[sorted_list[in].n];
-         block3D_t array = (block3D_t)&bp->array[var*block3D_size];
-         double work[x_block_size+2][y_block_size+2][z_block_size+2];
-         memcpy(work, array, sizeof(work));
-         for (i = 1; i <= x_block_size; i++)
-            for (j = 1; j <= y_block_size; j++)
-               for (k = 1; k <= z_block_size; k++)
-                  array[i][j][k] = (work[i-1][j  ][k  ] +
-                                   work[i  ][j-1][k  ] +
-                                   work[i  ][j  ][k-1] +
-                                   work[i  ][j  ][k  ] +
-                                   work[i  ][j  ][k+1] +
-                                   work[i  ][j+1][k  ] +
-                                   work[i+1][j  ][k  ])/7.0;
+         double *barray = bp->array;
+#pragma omp task depend(inout: barray[var*block3D_size:number*block3D_size]) \
+                 firstprivate(stage, in, barray, x_block_size, y_block_size, z_block_size, var, number, block3D_size) \
+                 default(none)
+         {
+             for (unsigned v = var; v < var+number; ++v) {
+                 block3D_t array = (block3D_t)&barray[v*block3D_size];
+                 double work[x_block_size+2][y_block_size+2][z_block_size+2];
+                 memcpy(work, array, sizeof(work));
+                 for (int i = 1; i <= x_block_size; i++)
+                    for (int j = 1; j <= y_block_size; j++)
+                       for (int k = 1; k <= z_block_size; k++)
+                          array[i][j][k] = (work[i-1][j  ][k  ] +
+                                           work[i  ][j-1][k  ] +
+                                           work[i  ][j  ][k-1] +
+                                           work[i  ][j  ][k  ] +
+                                           work[i  ][j  ][k+1] +
+                                           work[i  ][j+1][k  ] +
+                                           work[i+1][j  ][k  ])/7.0;
+             }
+         }
       }
 
       total_fp_divs += (double) num_active*num_cells;
       total_fp_adds += (double) 6*num_active*num_cells;
    } else {
-#pragma omp parallel for default(shared) private (i, j, k, bp, sb, sm, sf)
-      for (in = 0; in < sorted_index[num_refine+1]; in++) {
-         bp = &blocks[sorted_list[in].n];
-         block3D_t array = (block3D_t)&bp->array[var*block3D_size];
-         double work[x_block_size+2][y_block_size+2][z_block_size+2];
-         memcpy(work, array, sizeof(work));
-         for (i = 1; i <= x_block_size; i++)
-            for (j = 1; j <= y_block_size; j++)
-               for (k = 1; k <= z_block_size; k++) {
-                  sb = work[i-1][j-1][k-1] +
-                       work[i-1][j-1][k  ] +
-                       work[i-1][j-1][k+1] +
-                       work[i-1][j  ][k-1] +
-                       work[i-1][j  ][k  ] +
-                       work[i-1][j  ][k+1] +
-                       work[i-1][j+1][k-1] +
-                       work[i-1][j+1][k  ] +
-                       work[i-1][j+1][k+1];
-                  sm = work[i  ][j-1][k-1] +
-                       work[i  ][j-1][k  ] +
-                       work[i  ][j-1][k+1] +
-                       work[i  ][j  ][k-1] +
-                       work[i  ][j  ][k  ] +
-                       work[i  ][j  ][k+1] +
-                       work[i  ][j+1][k-1] +
-                       work[i  ][j+1][k  ] +
-                       work[i  ][j+1][k+1];
-                  sf = work[i+1][j-1][k-1] +
-                       work[i+1][j-1][k  ] +
-                       work[i+1][j-1][k+1] +
-                       work[i+1][j  ][k-1] +
-                       work[i+1][j  ][k  ] +
-                       work[i+1][j  ][k+1] +
-                       work[i+1][j+1][k-1] +
-                       work[i+1][j+1][k  ] +
-                       work[i+1][j+1][k+1];
-                  array[i][j][k] = (sb + sm + sf)/27.0;
-               }
-      }
-
-      total_fp_divs += (double) num_active*num_cells;
-      total_fp_adds += (double) 26*num_active*num_cells;
+       assert(!"Only stencil 7 supported");
+//#pragma omp parallel for default(shared) private (bp, sb, sm, sf)
+//      for (in = 0; in < sorted_index[num_refine+1]; in++) {
+//         bp = &blocks[sorted_list[in].n];
+//         block3D_t array = (block3D_t)&bp->array[var*block3D_size];
+//         double work[x_block_size+2][y_block_size+2][z_block_size+2];
+//         memcpy(work, array, sizeof(work));
+//         for (int i = 1; i <= x_block_size; i++)
+//            for (int j = 1; j <= y_block_size; j++)
+//               for (int k = 1; k <= z_block_size; k++) {
+//                  sb = work[i-1][j-1][k-1] +
+//                       work[i-1][j-1][k  ] +
+//                       work[i-1][j-1][k+1] +
+//                       work[i-1][j  ][k-1] +
+//                       work[i-1][j  ][k  ] +
+//                       work[i-1][j  ][k+1] +
+//                       work[i-1][j+1][k-1] +
+//                       work[i-1][j+1][k  ] +
+//                       work[i-1][j+1][k+1];
+//                  sm = work[i  ][j-1][k-1] +
+//                       work[i  ][j-1][k  ] +
+//                       work[i  ][j-1][k+1] +
+//                       work[i  ][j  ][k-1] +
+//                       work[i  ][j  ][k  ] +
+//                       work[i  ][j  ][k+1] +
+//                       work[i  ][j+1][k-1] +
+//                       work[i  ][j+1][k  ] +
+//                       work[i  ][j+1][k+1];
+//                  sf = work[i+1][j-1][k-1] +
+//                       work[i+1][j-1][k  ] +
+//                       work[i+1][j-1][k+1] +
+//                       work[i+1][j  ][k-1] +
+//                       work[i+1][j  ][k  ] +
+//                       work[i+1][j  ][k+1] +
+//                       work[i+1][j+1][k-1] +
+//                       work[i+1][j+1][k  ] +
+//                       work[i+1][j+1][k+1];
+//                  array[i][j][k] = (sb + sm + sf)/27.0;
+//               }
+//      }
+//
+//      total_fp_divs += (double) num_active*num_cells;
+//      total_fp_adds += (double) 26*num_active*num_cells;
    }
 }
 

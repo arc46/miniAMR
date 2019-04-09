@@ -24,6 +24,7 @@
 //
 // ************************************************************************
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <mpi.h>
@@ -61,6 +62,8 @@ void driver(void)
 
    if (use_time) delta = calc_time_step();
    for (sim_time = 0.0, done = comm_stage =calc_stage=0, ts = 1; !done; ts++) {
+#pragma omp parallel
+#pragma omp single
       for (stage=0; stage < stages_per_ts; stage++,comm_stage++,calc_stage++) {
          total_blocks += global_active;
          if (global_active < nb_min)
@@ -76,33 +79,28 @@ void driver(void)
             comm(start, number, comm_stage);
             t4 = timer();
             timer_comm_all += t4 - t3;
-            for (var = start; var < (start+number); var ++) {
-               stencil_driver(var, calc_stage);
-//#pragma omp parallel for private (bp)
-//               for (in = 0; in < sorted_index[num_refine+1]; in++) {
-//                  bp = &blocks[sorted_list[in].n];
-//                  stencil_driver(bp, var, calc_stage);
-//               }
-               t3 = timer();
-//if (!my_pe) printf("var %d took %lf\n", var, (t3 - t4));
-               timer_calc_all += t3 - t4;
-               if (checksum_freq && !(stage%checksum_freq)) {
-                  sum = check_sum(var);
-                  if (report_diffusion && !my_pe)
-                     printf("%d var %d sum %lf old %lf diff %lf %lf tol %lf\n",
-                            ts, var, sum, grid_sum[var], (sum - grid_sum[var]),
-                            (fabs(sum - grid_sum[var])/grid_sum[var]), tol);
-                  if (stencil || var == 0)
-                     if (fabs(sum - grid_sum[var])/grid_sum[var] > tol) {
-                        if (!my_pe)
-                           printf("Time step %d sum %lf (old %lf) variable %d difference too large\n", ts, sum, grid_sum[var], var);
-                           return;
-                     }
-                  grid_sum[var] = sum;
-               }
-               t4 = timer();
-               timer_cs_all += t4 - t3;
-            }
+            stencil_driver(stage, start, number, calc_stage);
+            t3 = timer();
+            timer_calc_all += t3 - t4;
+            if (checksum_freq && !(stage%checksum_freq)) {
+#pragma omp taskwait
+                for (int var = start; var < start+number; ++var){
+                    sum = check_sum(var);
+                    if (report_diffusion && !my_pe)
+                       printf("%d var %d sum %lf old %lf diff %lf %lf tol %lf\n",
+                              ts, var, sum, grid_sum[var], (sum - grid_sum[var]),
+                              (fabs(sum - grid_sum[var])/grid_sum[var]), tol);
+                    if (stencil || var == 0)
+                       if (fabs(sum - grid_sum[var])/grid_sum[var] > tol) {
+                          if (!my_pe)
+                             printf("Time step %d sum %lf (old %lf) variable %d difference too large\n", ts, sum, grid_sum[var], var);
+                             exit(1);
+                       }
+                    grid_sum[var] = sum;
+                }
+             }
+             t4 = timer();
+             timer_cs_all += t4 - t3;
          }
       }
 
