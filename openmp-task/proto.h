@@ -40,7 +40,7 @@ void del_sorted_list(num_sz, int, int);
 int find_sorted_list(num_sz, int);
 
 // check_sum.c
-double check_sum(int);
+double check_sum(int, int, double*);
 
 // comm_block.c
 void comm_proc(void);

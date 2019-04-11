@@ -324,6 +324,6 @@ void init(void)
 
    check_buff_size();
 
-   for (var = 0; var < num_vars; var++)
-      grid_sum[var] = check_sum(var);
+   // AR: for (var = 0; var < num_vars; var++)
+   check_sum(0, num_vars, grid_sum);
 }

@@ -33,32 +33,41 @@
 #include "proto.h"
 
 // Generate check sum for a variable over all active blocks.
-double check_sum(int var)
+double check_sum(int var, int number, double *sum)
 {
-   int in, i, j, k;
-   double sum, gsum, block_sum, t1, t2, t3;
+   int in;
+   double gsum, t1, t2, t3;
    block *bp;
+
+   typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
 
    t1 = timer();
 
-   sum = 0.0;
-#pragma omp parallel for private (i, j, k, bp, block_sum) reduction(+: sum)
    for (in = 0; in < sorted_index[num_refine+1]; in++) {
       bp = &blocks[sorted_list[in].n];
-      block_sum = 0.0;
-      typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
-      block3D_t array = (block3D_t)&bp->array[var*block3D_size];
-      for (i = 1; i <= x_block_size; i++)
-         for (j = 1; j <= y_block_size; j++)
-            for (k = 1; k <= z_block_size; k++)
-               block_sum += array[i][j][k];
-//if (!my_pe) printf("cs in %d block %d sum %lf\n", in, sorted_list[in].n, block_sum);
-      sum += block_sum;
+      double *barray = bp->array;
+#pragma omp task depend(in: barray[var*block3D_size:number*block3D_size]) \
+                 depend(inout: sum[var:number]) \
+                 firstprivate(in, var, number, barray, sum, x_block_size, y_block_size, z_block_size, block3D_size) \
+                 default(none)
+      {
+          for (int v = var; v < var+number; ++v) {
+              block3D_t array = (block3D_t)&barray[v*block3D_size];
+              double block_sum = 0.0;
+              for (int i = 1; i <= x_block_size; i++)
+                 for (int j = 1; j <= y_block_size; j++)
+                    for (int k = 1; k <= z_block_size; k++)
+                       block_sum += array[i][j][k];
+// AR: could use atomic if it could be concurrent - #pragma omp atomic
+              sum[v] += block_sum;
+          }
+      }
    }
 
    t2 = timer();
 
-   MPI_Allreduce(&sum, &gsum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+   //AR: FIXME to be considered when incorporating MPI
+   //MPI_Allreduce(&sum, &gsum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
    t3 = timer();
    timer_cs_red += t3 - t2;
