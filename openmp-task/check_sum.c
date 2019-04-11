@@ -47,7 +47,6 @@ double check_sum(int var, int number, double *sum)
       bp = &blocks[sorted_list[in].n];
       double *barray = bp->array;
 #pragma omp task depend(in: barray[var*block3D_size:number*block3D_size]) \
-                 depend(inout: sum[var:number]) \
                  firstprivate(in, var, number, barray, sum, x_block_size, y_block_size, z_block_size, block3D_size) \
                  default(none)
       {
@@ -58,11 +57,13 @@ double check_sum(int var, int number, double *sum)
                  for (int j = 1; j <= y_block_size; j++)
                     for (int k = 1; k <= z_block_size; k++)
                        block_sum += array[i][j][k];
-// AR: could use atomic if it could be concurrent - #pragma omp atomic
+#pragma omp atomic
               sum[v] += block_sum;
           }
       }
    }
+
+#pragma omp taskwait
 
    t2 = timer();
 

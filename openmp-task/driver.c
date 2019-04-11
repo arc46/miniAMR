@@ -87,25 +87,20 @@ void driver(void)
             timer_calc_all += t3 - t4;
             if (checksum_freq && !(stage%checksum_freq)) {
                 check_sum(start, number, sum);
-#pragma omp task depend(inout: sum[start:number]) \
-                 depend(inout: grid_sum[start:number]) \
-                 firstprivate(report_diffusion, my_pe, ts, var, tol, stencil, start, number) 
-                {
-                    for (int var = start; var < start+number; ++var){
-                        if (report_diffusion && !my_pe)
-                           printf("%d var %d sum %lf old %lf diff %lf %lf tol %lf\n",
-                                  ts, var, sum[var], grid_sum[var], (sum[var] - grid_sum[var]),
-                                  (fabs(sum[var] - grid_sum[var])/grid_sum[var]), tol);
-                        if (stencil || var == 0)
-                           if (fabs(sum[var] - grid_sum[var])/grid_sum[var] > tol) {
-                              if (!my_pe)
-                                 printf("Time step %d sum %lf (old %lf) variable %d difference too large\n", ts, sum[var], grid_sum[var], var);
-                                 exit(1);
-                           }
-                        grid_sum[var] = sum[var];
-                        sum[var] = 0.0;
-                    }
-                } //validate checksum task
+                for (int var = start; var < start+number; ++var){
+                    if (report_diffusion && !my_pe)
+                       printf("%d var %d sum %lf old %lf diff %lf %lf tol %lf\n",
+                              ts, var, sum[var], grid_sum[var], (sum[var] - grid_sum[var]),
+                              (fabs(sum[var] - grid_sum[var])/grid_sum[var]), tol);
+                    if (stencil || var == 0)
+                       if (fabs(sum[var] - grid_sum[var])/grid_sum[var] > tol) {
+                          if (!my_pe)
+                             printf("Time step %d sum %lf (old %lf) variable %d difference too large\n", ts, sum[var], grid_sum[var], var);
+                             exit(1);
+                       }
+                    grid_sum[var] = sum[var];
+                    sum[var] = 0.0;
+                }
              }
              t4 = timer();
              timer_cs_all += t4 - t3;
