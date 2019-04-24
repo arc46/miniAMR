@@ -35,16 +35,14 @@
 // Generate check sum for a variable over all active blocks.
 double check_sum(int var, int number, double *sum)
 {
-   int in;
    double gsum, t1, t2, t3;
-   block *bp;
 
    typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
 
    t1 = timer();
 
-   for (in = 0; in < sorted_index[num_refine+1]; in++) {
-      bp = &blocks[sorted_list[in].n];
+   for (int in = 0; in < sorted_index[num_refine+1]; in++) {
+      block *bp = &blocks[sorted_list[in].n];
       double *barray = bp->array;
 #pragma omp task depend(in: barray[var*block3D_size:number*block3D_size]) \
                  firstprivate(in, var, number, barray, sum, x_block_size, y_block_size, z_block_size, block3D_size) \
@@ -57,7 +55,7 @@ double check_sum(int var, int number, double *sum)
                  for (int j = 1; j <= y_block_size; j++)
                     for (int k = 1; k <= z_block_size; k++)
                        block_sum += array[i][j][k];
-#pragma omp atomic
+              #pragma omp atomic
               sum[v] += block_sum;
           }
       }
