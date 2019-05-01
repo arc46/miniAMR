@@ -1523,7 +1523,6 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
    int is, ie, js, je;
    block *bp, *bp1;
 
-   typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
    /* Determine direction and then exchange data across the face
    */
    if (!code) {
@@ -1542,6 +1541,7 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
          {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
             for (int m = start; m < start+num_comm; m++) {
                block3D_t array  = (block3D_t)&barray[m*block3D_size];
                block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
@@ -1574,6 +1574,7 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                           firstprivate(start, num_comm, barray, barray1, \
                                        is, ie, y_block_size, z_block_size, block3D_size) default(none)
          {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
             for (int m = start; m < start+num_comm; m++) {
                block3D_t array  = (block3D_t)&barray[m*block3D_size];
                block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
@@ -1610,6 +1611,7 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                           firstprivate(start, num_comm, barray, barray1, \
                                        is, ie, js, je, z_block_size, block3D_size) default(none)
          {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
             for (int m = start; m < start+num_comm; m++) {
                block3D_t array  = (block3D_t)&barray[m*block3D_size];
                block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
@@ -1637,6 +1639,7 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
          {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
             for (int m = start; m < start+num_comm; m++) {
                block3D_t array  = (block3D_t)&barray[m*block3D_size];
                block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
@@ -1662,6 +1665,7 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
          {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
             for (int m = start; m < start+num_comm; m++) {
                block3D_t array  = (block3D_t)&barray[m*block3D_size];
                block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
@@ -1687,6 +1691,7 @@ void on_proc_comm(int n, int n1, int l, int start, int num_comm)
                           firstprivate(start, num_comm, barray, barray1, \
                                        x_block_size, y_block_size, z_block_size, block3D_size) default(none)
          {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
             for (int m = start; m < start+num_comm; m++) {
                block3D_t array  = (block3D_t)&barray[m*block3D_size];
                block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
@@ -1744,22 +1749,25 @@ void on_proc_comm_diff(int n, int n1, int l, int iq, int jq,
                           firstprivate(start, num_comm, barray, barray1, i0, i1, i2, i3, j1, k1, \
                                        y_block_half, z_block_half, \
                                        y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int j = 1; j <= y_block_half; j++)
-               for (int k = 1; k <= z_block_half; k++) {
-                  array1[i2][2*j-1][2*k-1] =
-                  array1[i2][2*j-1][2*k  ] =
-                  array1[i2][2*j  ][2*k-1] =
-                  array1[i2][2*j  ][2*k  ] =
-                                             array[i1][j+j1][k+k1]/4.0;
-                  array[i0][j+j1][k+k1] =
-                                             array1[i3][2*j-1][2*k-1] +
-                                             array1[i3][2*j-1][2*k  ] +
-                                             array1[i3][2*j  ][2*k-1] +
-                                             array1[i3][2*j  ][2*k  ];
-               }
+         {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int j = 1; j <= y_block_half; j++)
+                  for (int k = 1; k <= z_block_half; k++) {
+                     array1[i2][2*j-1][2*k-1] =
+                     array1[i2][2*j-1][2*k  ] =
+                     array1[i2][2*j  ][2*k-1] =
+                     array1[i2][2*j  ][2*k  ] =
+                                                array[i1][j+j1][k+k1]/4.0;
+                     array[i0][j+j1][k+k1] =
+                                                array1[i3][2*j-1][2*k-1] +
+                                                array1[i3][2*j-1][2*k  ] +
+                                                array1[i3][2*j  ][2*k-1] +
+                                                array1[i3][2*j  ][2*k  ];
+                  }
+            }
          }
       } else if ((l/2) == 1) {
          if (l == 2) {             /* South */
@@ -1782,22 +1790,25 @@ void on_proc_comm_diff(int n, int n1, int l, int iq, int jq,
                           firstprivate(start, num_comm, barray, barray1, j0, j1, j2, j3, i1, k1, \
                                        x_block_half, z_block_half, \
                                        y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int i = 1; i <= x_block_half; i++)
-               for (int k = 1; k <= z_block_half; k++) {
-                  array1[2*i-1][j2][2*k-1] =
-                  array1[2*i-1][j2][2*k  ] =
-                  array1[2*i  ][j2][2*k-1] =
-                  array1[2*i  ][j2][2*k  ] =
-                                             array[i+i1][j1][k+k1]/4.0;
-                  array[i+i1][j0][k+k1] =
-                                             array1[2*i-1][j3][2*k-1] +
-                                             array1[2*i-1][j3][2*k  ] +
-                                             array1[2*i  ][j3][2*k-1] +
-                                             array1[2*i  ][j3][2*k  ];
-               }
+         {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int i = 1; i <= x_block_half; i++)
+                  for (int k = 1; k <= z_block_half; k++) {
+                     array1[2*i-1][j2][2*k-1] =
+                     array1[2*i-1][j2][2*k  ] =
+                     array1[2*i  ][j2][2*k-1] =
+                     array1[2*i  ][j2][2*k  ] =
+                                                array[i+i1][j1][k+k1]/4.0;
+                     array[i+i1][j0][k+k1] =
+                                                array1[2*i-1][j3][2*k-1] +
+                                                array1[2*i-1][j3][2*k  ] +
+                                                array1[2*i  ][j3][2*k-1] +
+                                                array1[2*i  ][j3][2*k  ];
+                  }
+            }
          }
       } else if ((l/2) == 2) {
          if (l == 4) {             /* Down */
@@ -1820,22 +1831,25 @@ void on_proc_comm_diff(int n, int n1, int l, int iq, int jq,
                           firstprivate(start, num_comm, barray, barray1, k0, k1, k2, k3, i1, j1, \
                                        x_block_half, y_block_half, \
                                        y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            for (int i = 1; i <= x_block_half; i++)
-               for (int j = 1; j <= y_block_half; j++) {
-                  array1[2*i-1][2*j-1][k2] =
-                  array1[2*i-1][2*j  ][k2] =
-                  array1[2*i  ][2*j-1][k2] =
-                  array1[2*i  ][2*j  ][k2] =
-                                              array[i+i1][j+j1][k1]/4.0;
-                  array[i+i1][j+j1][k0] =
-                                              array1[2*i-1][2*j-1][k3] +
-                                              array1[2*i-1][2*j  ][k3] +
-                                              array1[2*i  ][2*j-1][k3] +
-                                              array1[2*i  ][2*j  ][k3];
-               }
+         {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               for (int i = 1; i <= x_block_half; i++)
+                  for (int j = 1; j <= y_block_half; j++) {
+                     array1[2*i-1][2*j-1][k2] =
+                     array1[2*i-1][2*j  ][k2] =
+                     array1[2*i  ][2*j-1][k2] =
+                     array1[2*i  ][2*j  ][k2] =
+                                                 array[i+i1][j+j1][k1]/4.0;
+                     array[i+i1][j+j1][k0] =
+                                                 array1[2*i-1][2*j-1][k3] +
+                                                 array1[2*i-1][2*j  ][k3] +
+                                                 array1[2*i  ][2*j-1][k3] +
+                                                 array1[2*i  ][2*j  ][k3];
+                  }
+            }
          }
       }
    } else {  /* transfer ghosts */
@@ -1865,60 +1879,63 @@ void on_proc_comm_diff(int n, int n1, int l, int iq, int jq,
                                        i0, i1, i2, i3, j1, j2, j3, k1, k2, k3, \
                                        y_block_half, z_block_half, \
                                        y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            array1[i2][0][0] = array[i1][j1][k1]/4.0;
-            for (int k = 1; k <= z_block_half; k++)
-               array1[i2][0][2*k-1] =
-               array1[i2][0][2*k  ] = array[i1][j1][k+k1]/4.0;
-            array1[i2][0][k2] = array[i1][j1][k3+k1]/4.0;
-            if (jq == 0) {
-               if (iq == 0)
-                  array[i0][0][0 ] = array1[i3][0][0 ];
-               else
-                  array[i0][0][k2] = array1[i3][0][k2];
+         {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               array1[i2][0][0] = array[i1][j1][k1]/4.0;
                for (int k = 1; k <= z_block_half; k++)
-                  array[i0][0][k+k1] = (array1[i3][0][2*k-1] +
-                                               array1[i3][0][2*k  ]);
-            }
-            for (int j = 1; j <= y_block_half; j++) {
-               array1[i2][2*j-1][0] =
-               array1[i2][2*j  ][0] = array[i1][j+j1][k1]/4.0;
-               if (iq == 0)
-                  array[i0][j+j1][0 ] = (array1[i3][2*j-1][0 ] +
-                                                array1[i3][2*j  ][0 ]);
-               else
-                  array[i0][j+j1][k2] = (array1[i3][2*j-1][k2] +
-                                                array1[i3][2*j  ][k2]);
-               for (int k = 1; k <= z_block_half; k++) {
-                  array1[i2][2*j-1][2*k-1] =
-                  array1[i2][2*j-1][2*k  ] =
-                  array1[i2][2*j  ][2*k-1] =
-                  array1[i2][2*j  ][2*k  ] =
-                                             array[i1][j+j1][k+k1]/4.0;
-                  array[i0][j+j1][k+k1] =
-                                             array1[i3][2*j-1][2*k-1] +
-                                             array1[i3][2*j-1][2*k  ] +
-                                             array1[i3][2*j  ][2*k-1] +
-                                             array1[i3][2*j  ][2*k  ];
+                  array1[i2][0][2*k-1] =
+                  array1[i2][0][2*k  ] = array[i1][j1][k+k1]/4.0;
+               array1[i2][0][k2] = array[i1][j1][k3+k1]/4.0;
+               if (jq == 0) {
+                  if (iq == 0)
+                     array[i0][0][0 ] = array1[i3][0][0 ];
+                  else
+                     array[i0][0][k2] = array1[i3][0][k2];
+                  for (int k = 1; k <= z_block_half; k++)
+                     array[i0][0][k+k1] = (array1[i3][0][2*k-1] +
+                                                  array1[i3][0][2*k  ]);
                }
-               array1[i2][2*j-1][k2] =
-               array1[i2][2*j  ][k2] = array[i1][j+j1][k3+k1]/4.0;
-            }
-            array1[i2][j2][0] = array[i1][j3+j1][k1]/4.0;
-            for (int k = 1; k <= z_block_half; k++)
-               array1[i2][j2][2*k-1] =
-               array1[i2][j2][2*k  ] = array[i1][j3+j1][k+k1]/4.0;
-            array1[i2][j2][k2] = array[i1][j3+j1][k3+k1]/4.0;
-            if (jq == 1) {
-               if (iq == 0)
-                  array[i0][j2][0 ] = array1[i3][j2][0 ];
-               else
-                  array[i0][j2][k2] = array1[i3][j2][k2];
+               for (int j = 1; j <= y_block_half; j++) {
+                  array1[i2][2*j-1][0] =
+                  array1[i2][2*j  ][0] = array[i1][j+j1][k1]/4.0;
+                  if (iq == 0)
+                     array[i0][j+j1][0 ] = (array1[i3][2*j-1][0 ] +
+                                                   array1[i3][2*j  ][0 ]);
+                  else
+                     array[i0][j+j1][k2] = (array1[i3][2*j-1][k2] +
+                                                   array1[i3][2*j  ][k2]);
+                  for (int k = 1; k <= z_block_half; k++) {
+                     array1[i2][2*j-1][2*k-1] =
+                     array1[i2][2*j-1][2*k  ] =
+                     array1[i2][2*j  ][2*k-1] =
+                     array1[i2][2*j  ][2*k  ] =
+                                                array[i1][j+j1][k+k1]/4.0;
+                     array[i0][j+j1][k+k1] =
+                                                array1[i3][2*j-1][2*k-1] +
+                                                array1[i3][2*j-1][2*k  ] +
+                                                array1[i3][2*j  ][2*k-1] +
+                                                array1[i3][2*j  ][2*k  ];
+                  }
+                  array1[i2][2*j-1][k2] =
+                  array1[i2][2*j  ][k2] = array[i1][j+j1][k3+k1]/4.0;
+               }
+               array1[i2][j2][0] = array[i1][j3+j1][k1]/4.0;
                for (int k = 1; k <= z_block_half; k++)
-                  array[i0][j2][k+k1] = (array1[i3][j2][2*k-1] +
-                                                array1[i3][j2][2*k  ]);
+                  array1[i2][j2][2*k-1] =
+                  array1[i2][j2][2*k  ] = array[i1][j3+j1][k+k1]/4.0;
+               array1[i2][j2][k2] = array[i1][j3+j1][k3+k1]/4.0;
+               if (jq == 1) {
+                  if (iq == 0)
+                     array[i0][j2][0 ] = array1[i3][j2][0 ];
+                  else
+                     array[i0][j2][k2] = array1[i3][j2][k2];
+                  for (int k = 1; k <= z_block_half; k++)
+                     array[i0][j2][k+k1] = (array1[i3][j2][2*k-1] +
+                                                   array1[i3][j2][2*k  ]);
+               }
             }
          }
       } else if ((l/2) == 1) {
@@ -1947,60 +1964,63 @@ void on_proc_comm_diff(int n, int n1, int l, int iq, int jq,
                                        j0, j1, j2, j3, i1, i2, i3, k1, k2, k3, \
                                        x_block_half, z_block_half, \
                                        y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            array1[0][j2][0 ] = array[i1][j1][k1]/4.0;
-            for (int k = 1; k <= z_block_half; k++)
-               array1[0][j2][2*k-1] =
-               array1[0][j2][2*k  ] = array[i1][j1][k+k1]/4.0;
-            array1[0][j2][k2] = array[i1][j1][k3+k1]/4.0;
-            if (jq == 0) {
-               if (iq == 0)
-                  array[0][j0][0 ] = array1[0][j3][0 ];
-               else
-                  array[0][j0][k2] = array1[0][j3][k2];
+         {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               array1[0][j2][0 ] = array[i1][j1][k1]/4.0;
                for (int k = 1; k <= z_block_half; k++)
-                  array[0][j0][k+k1] = (array1[0][j3][2*k-1] +
-                                               array1[0][j3][2*k  ]);
-            }
-            for (int i = 1; i <= x_block_half; i++) {
-               array1[2*i-1][j2][0] =
-               array1[2*i  ][j2][0] = array[i+i1][j1][k1]/4.0;
-               if (iq == 0)
-                  array[i+i1][j0][0 ] = (array1[2*i-1][j3][0 ] +
-                                                array1[2*i  ][j3][0 ]);
-               else
-                  array[i+i1][j0][k2] = (array1[2*i-1][j3][k2] +
-                                                array1[2*i  ][j3][k2]);
-               for (int k = 1; k <= z_block_half; k++) {
-                  array1[2*i-1][j2][2*k-1] =
-                  array1[2*i-1][j2][2*k  ] =
-                  array1[2*i  ][j2][2*k-1] =
-                  array1[2*i  ][j2][2*k  ] =
-                                             array[i+i1][j1][k+k1]/4.0;
-                  array[i+i1][j0][k+k1] =
-                                             array1[2*i-1][j3][2*k-1] +
-                                             array1[2*i-1][j3][2*k  ] +
-                                             array1[2*i  ][j3][2*k-1] +
-                                             array1[2*i  ][j3][2*k  ];
+                  array1[0][j2][2*k-1] =
+                  array1[0][j2][2*k  ] = array[i1][j1][k+k1]/4.0;
+               array1[0][j2][k2] = array[i1][j1][k3+k1]/4.0;
+               if (jq == 0) {
+                  if (iq == 0)
+                     array[0][j0][0 ] = array1[0][j3][0 ];
+                  else
+                     array[0][j0][k2] = array1[0][j3][k2];
+                  for (int k = 1; k <= z_block_half; k++)
+                     array[0][j0][k+k1] = (array1[0][j3][2*k-1] +
+                                                  array1[0][j3][2*k  ]);
                }
-               array1[2*i-1][j2][k2] =
-               array1[2*i  ][j2][k2] = array[i+i1][j1][k3+k1]/4.0;
-            }
-            array1[i2][j2][0 ] = array[i3+i1][j1][k1]/4.0;
-            for (int k = 1; k <= z_block_half; k++)
-               array1[i2][j2][2*k-1] =
-               array1[i2][j2][2*k  ] = array[i3+i1][j1][k+k1]/4.0;
-            array1[i2][j2][k2] = array[i3+i1][j1][k3+k1]/4.0;
-            if (jq == 1) {
-               if (iq == 0)
-                  array[i2][j0][0 ] = array1[i2][j3][0 ];
-               else
-                  array[i2][j0][k2] = array1[i2][j3][k2];
+               for (int i = 1; i <= x_block_half; i++) {
+                  array1[2*i-1][j2][0] =
+                  array1[2*i  ][j2][0] = array[i+i1][j1][k1]/4.0;
+                  if (iq == 0)
+                     array[i+i1][j0][0 ] = (array1[2*i-1][j3][0 ] +
+                                                   array1[2*i  ][j3][0 ]);
+                  else
+                     array[i+i1][j0][k2] = (array1[2*i-1][j3][k2] +
+                                                   array1[2*i  ][j3][k2]);
+                  for (int k = 1; k <= z_block_half; k++) {
+                     array1[2*i-1][j2][2*k-1] =
+                     array1[2*i-1][j2][2*k  ] =
+                     array1[2*i  ][j2][2*k-1] =
+                     array1[2*i  ][j2][2*k  ] =
+                                                array[i+i1][j1][k+k1]/4.0;
+                     array[i+i1][j0][k+k1] =
+                                                array1[2*i-1][j3][2*k-1] +
+                                                array1[2*i-1][j3][2*k  ] +
+                                                array1[2*i  ][j3][2*k-1] +
+                                                array1[2*i  ][j3][2*k  ];
+                  }
+                  array1[2*i-1][j2][k2] =
+                  array1[2*i  ][j2][k2] = array[i+i1][j1][k3+k1]/4.0;
+               }
+               array1[i2][j2][0 ] = array[i3+i1][j1][k1]/4.0;
                for (int k = 1; k <= z_block_half; k++)
-                  array[i2][j0][k+k1] = (array1[i2][j3][2*k-1] +
-                                                array1[i2][j3][2*k  ]);
+                  array1[i2][j2][2*k-1] =
+                  array1[i2][j2][2*k  ] = array[i3+i1][j1][k+k1]/4.0;
+               array1[i2][j2][k2] = array[i3+i1][j1][k3+k1]/4.0;
+               if (jq == 1) {
+                  if (iq == 0)
+                     array[i2][j0][0 ] = array1[i2][j3][0 ];
+                  else
+                     array[i2][j0][k2] = array1[i2][j3][k2];
+                  for (int k = 1; k <= z_block_half; k++)
+                     array[i2][j0][k+k1] = (array1[i2][j3][2*k-1] +
+                                                   array1[i2][j3][2*k  ]);
+               }
             }
          }
       } else if ((l/2) == 2) {
@@ -2029,60 +2049,63 @@ void on_proc_comm_diff(int n, int n1, int l, int iq, int jq,
                                        k0, k1, k2, k3, i1, i2, i3, j1, j2, j3, \
                                        x_block_half, y_block_half, \
                                        y_block_size, z_block_size, block3D_size) default(none)
-         for (int m = start; m < start+num_comm; m++) {
-            block3D_t array  = (block3D_t)&barray[m*block3D_size];
-            block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
-            array1[0][0 ][k2] = array[i1][j1][k1]/4.0;
-            for (int j = 1; j <= y_block_half; j++)
-               array1[0][2*j-1][k2] =
-               array1[0][2*j  ][k2] = array[i1][j+j1][k1]/4.0;
-            array1[0][j2][k2] = array[i1][j3+j1][k1]/4.0;
-            if (jq == 0) {
-               if (iq == 0)
-                  array[0][0 ][k0] = array1[0][0 ][k3];
-               else
-                  array[0][j2][k0] = array1[0][j2][k3];
+         {
+            typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
+            for (int m = start; m < start+num_comm; m++) {
+               block3D_t array  = (block3D_t)&barray[m*block3D_size];
+               block3D_t array1 = (block3D_t)&barray1[m*block3D_size];
+               array1[0][0 ][k2] = array[i1][j1][k1]/4.0;
                for (int j = 1; j <= y_block_half; j++)
-                  array[0][j+j1][k0] = (array1[0][2*j-1][k3] +
-                                               array1[0][2*j  ][k3]);
-            }
-            for (int i = 1; i <= x_block_half; i++) {
-               array1[2*i-1][0][k2] =
-               array1[2*i  ][0][k2] = array[i+i1][j1][k1]/4.0;
-               if (iq == 0)
-                  array[i+i1][0][k0] = (array1[2*i-1][0][k3] +
-                                               array1[2*i  ][0][k3]);
-               else
-                  array[i+i1][j2][k0] = (array1[2*i-1][j2][k3] +
-                                                array1[2*i  ][j2][k3]);
-               for (int j = 1; j <= y_block_half; j++) {
-                  array1[2*i-1][2*j-1][k2] =
-                  array1[2*i-1][2*j  ][k2] =
-                  array1[2*i  ][2*j-1][k2] =
-                  array1[2*i  ][2*j  ][k2] =
-                                              array[i+i1][j+j1][k1]/4.0;
-                  array[i+i1][j+j1][k0] =
-                                              array1[2*i-1][2*j-1][k3] +
-                                              array1[2*i-1][2*j  ][k3] +
-                                              array1[2*i  ][2*j-1][k3] +
-                                              array1[2*i  ][2*j  ][k3];
+                  array1[0][2*j-1][k2] =
+                  array1[0][2*j  ][k2] = array[i1][j+j1][k1]/4.0;
+               array1[0][j2][k2] = array[i1][j3+j1][k1]/4.0;
+               if (jq == 0) {
+                  if (iq == 0)
+                     array[0][0 ][k0] = array1[0][0 ][k3];
+                  else
+                     array[0][j2][k0] = array1[0][j2][k3];
+                  for (int j = 1; j <= y_block_half; j++)
+                     array[0][j+j1][k0] = (array1[0][2*j-1][k3] +
+                                                  array1[0][2*j  ][k3]);
                }
-               array1[2*i-1][j2][k2] =
-               array1[2*i  ][j2][k2] = array[i+i1][j3+j1][k1]/4.0;
-            }
-            array1[i2][0 ][k2] = array[i3+i1][j1][k1]/4.0;
-            for (int j = 1; j <= y_block_half; j++)
-               array1[i2][2*j-1][k2] =
-               array1[i2][2*j  ][k2] = array[i3+i1][j+j1][k1]/4.0;
-            array1[i2][j2][k2] = array[i3+i1][j3+j1][k1]/4.0;
-            if (jq == 1) {
-               if (iq == 0)
-                  array[i2][0 ][k0] = array1[i2][0 ][k3];
-               else
-                  array[i2][j2][k0] = array1[i2][j2][k3];
+               for (int i = 1; i <= x_block_half; i++) {
+                  array1[2*i-1][0][k2] =
+                  array1[2*i  ][0][k2] = array[i+i1][j1][k1]/4.0;
+                  if (iq == 0)
+                     array[i+i1][0][k0] = (array1[2*i-1][0][k3] +
+                                                  array1[2*i  ][0][k3]);
+                  else
+                     array[i+i1][j2][k0] = (array1[2*i-1][j2][k3] +
+                                                   array1[2*i  ][j2][k3]);
+                  for (int j = 1; j <= y_block_half; j++) {
+                     array1[2*i-1][2*j-1][k2] =
+                     array1[2*i-1][2*j  ][k2] =
+                     array1[2*i  ][2*j-1][k2] =
+                     array1[2*i  ][2*j  ][k2] =
+                                                 array[i+i1][j+j1][k1]/4.0;
+                     array[i+i1][j+j1][k0] =
+                                                 array1[2*i-1][2*j-1][k3] +
+                                                 array1[2*i-1][2*j  ][k3] +
+                                                 array1[2*i  ][2*j-1][k3] +
+                                                 array1[2*i  ][2*j  ][k3];
+                  }
+                  array1[2*i-1][j2][k2] =
+                  array1[2*i  ][j2][k2] = array[i+i1][j3+j1][k1]/4.0;
+               }
+               array1[i2][0 ][k2] = array[i3+i1][j1][k1]/4.0;
                for (int j = 1; j <= y_block_half; j++)
-                  array[i2][j+j1][k0] = (array1[i2][2*j-1][k3] +
-                                                array1[i2][2*j  ][k3]);
+                  array1[i2][2*j-1][k2] =
+                  array1[i2][2*j  ][k2] = array[i3+i1][j+j1][k1]/4.0;
+               array1[i2][j2][k2] = array[i3+i1][j3+j1][k1]/4.0;
+               if (jq == 1) {
+                  if (iq == 0)
+                     array[i2][0 ][k0] = array1[i2][0 ][k3];
+                  else
+                     array[i2][j2][k0] = array1[i2][j2][k3];
+                  for (int j = 1; j <= y_block_half; j++)
+                     array[i2][j+j1][k0] = (array1[i2][2*j-1][k3] +
+                                                   array1[i2][2*j  ][k3]);
+               }
             }
          }
       }

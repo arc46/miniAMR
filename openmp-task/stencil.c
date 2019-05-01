@@ -90,7 +90,6 @@ void stencil_calc(int stage, int var, int number, int stencil_in)
    double sb, sm, sf;
    block *bp;
 
-   typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
 
    if (stencil_in == 7) {
 //#pragma omp parallel for default(shared) private(i, j, k, bp)
@@ -101,6 +100,7 @@ void stencil_calc(int stage, int var, int number, int stencil_in)
                  firstprivate(stage, in, barray, x_block_size, y_block_size, z_block_size, var, number, block3D_size) \
                  default(none)
          {
+             typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
              for (unsigned v = var; v < var+number; ++v) {
                  block3D_t array = (block3D_t)&barray[v*block3D_size];
                  double work[x_block_size+2][y_block_size+2][z_block_size+2];

@@ -37,8 +37,6 @@ double check_sum(int var, int number, double *sum)
 {
    double gsum, t1, t2, t3;
 
-   typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
-
    t1 = timer();
 
    for (int in = 0; in < sorted_index[num_refine+1]; in++) {
@@ -48,6 +46,7 @@ double check_sum(int var, int number, double *sum)
                  firstprivate(in, var, number, barray, sum, x_block_size, y_block_size, z_block_size, block3D_size) \
                  default(none)
       {
+          typedef double (*block3D_t)[y_block_size+2][z_block_size+2];
           for (int v = var; v < var+number; ++v) {
               block3D_t array = (block3D_t)&barray[v*block3D_size];
               double block_sum = 0.0;
